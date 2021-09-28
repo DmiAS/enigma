@@ -1,14 +1,36 @@
 package config
 
 import (
+	"bufio"
+	"bytes"
+	"math/rand"
+	"os"
+
 	"github.com/spf13/viper"
 )
 
 const (
-	AlphSize     = 26
+	AlphSize     = 256
 	GearsCount   = 4
 	RottersCount = 3
 	Spinners     = 2
+
+	infoFirst  = "# Конфигурация роттера"
+	infoSecond = "# Начальные значения роттера"
+	infoThird  = `# При какой букве крутить роттер, например, если Spin2 = "r", значит когда первый роттер дойдет до этой
+                 # буквы второй тоже повернется`
+
+	firstMapper     = "RotterFirstMap"
+	secondMapper    = "RotterSecondMap"
+	thirdMapper     = "RotterThirdMap"
+	reflectorMapper = "ReflectorMap"
+
+	firstInit  = "RotterFirstInit"
+	secondInit = "RotterSecondInit"
+	thirdInit  = "RotterThirdInit"
+
+	spinnerSecond = "Spin2"
+	spinnerThird  = "Spin3"
 )
 
 type Letters = [AlphSize]int
@@ -41,7 +63,7 @@ func NewConfig(configName string) (*Config, error) {
 	return createConfig(), nil
 }
 
-func createConfig() *Config{
+func createConfig() *Config {
 	cfg := new(Config)
 	cfg.Mappers[0] = createMapper(viper.GetString("RotterFirstMap"))
 	cfg.Mappers[1] = createMapper(viper.GetString("RotterSecondMap"))
@@ -57,13 +79,109 @@ func createConfig() *Config{
 	return cfg
 }
 
-func getInit(str string) int{
+func generateConfigFile(fileName string) error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+
+	buf := bufio.NewWriter(file)
+
+	mappers, err := genMappers()
+	if err != nil {
+		return err
+	}
+	buf.Write(mappers)
+
+	values, err := genInitValues()
+	if err != nil {
+		return err
+	}
+	buf.Write(values)
+
+	triggers, err := genTriggers()
+	if err != nil {
+		return err
+	}
+	buf.Write(triggers)
+	return nil
+}
+
+func genMappers() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	buf.WriteString(infoFirst + "\n")
+	first, err := generateRotterMappers()
+	if err != nil {
+		return nil, err
+	}
+
+	second, err := generateRotterMappers()
+	if err != nil {
+		return nil, err
+	}
+
+	third, err := generateRotterMappers()
+	if err != nil {
+		return nil, err
+	}
+
+	reflector, err := generateRotterMappers()
+	if err != nil {
+		return nil, err
+	}
+	buf.WriteString(firstMapper + "=" + string(first) + "\n")
+	buf.WriteString(secondMapper + "=" + string(second) + "\n")
+	buf.WriteString(thirdMapper + "=" + string(third) + "\n")
+	buf.WriteString(reflectorMapper + "=" + string(reflector) + "\n")
+	return buf.Bytes(), nil
+
+}
+
+func generateRotterMappers() ([]byte, error) {
+	shift := rand.Intn(AlphSize)
+	b := new(bytes.Buffer)
+	for i := 0; i < AlphSize; i++ {
+		char := byte((i + shift) % AlphSize)
+		if err := b.WriteByte(char); err != nil {
+			return nil, err
+		}
+	}
+	return b.Bytes(), nil
+}
+
+func genInitValues() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	buf.WriteString(infoSecond + "\n")
+	vals := [...]string{
+		string(rand.Intn(AlphSize)),
+		string(rand.Intn(AlphSize)),
+		string(rand.Intn(AlphSize)),
+	}
+	buf.WriteString(firstInit + "=" + vals[0] + "\n")
+	buf.WriteString(secondInit + "=" + vals[1] + "\n")
+	buf.WriteString(thirdInit + "=" + vals[2] + "\n")
+	return buf.Bytes(), nil
+}
+
+func genTriggers() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	buf.WriteString(infoThird + "\n")
+	vals := [...]string{
+		string(rand.Intn(AlphSize)),
+		string(rand.Intn(AlphSize)),
+	}
+	buf.WriteString(spinnerSecond + "=" + vals[0] + "\n")
+	buf.WriteString(spinnerThird + "=" + vals[1] + "\n")
+	return buf.Bytes(), nil
+}
+
+func getInit(str string) int {
 	char := str[0]
 	return int(char - 'a')
 }
-func createMapper(str string) Letters{
+func createMapper(str string) Letters {
 	var l Letters
-	for i := range str{
+	for i := range str {
 		l[i] = int(str[i] - 'a')
 	}
 	return l
