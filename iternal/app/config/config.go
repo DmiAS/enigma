@@ -3,6 +3,7 @@ package config
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"math/rand"
 	"os"
 
@@ -79,7 +80,7 @@ func createConfig() *Config {
 	return cfg
 }
 
-func generateConfigFile(fileName string) error {
+func GenerateConfigFile(fileName string) error {
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
@@ -91,19 +92,25 @@ func generateConfigFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	buf.Write(mappers)
+	if _, err := buf.Write(mappers); err != nil {
+		return err
+	}
 
 	values, err := genInitValues()
 	if err != nil {
 		return err
 	}
-	buf.Write(values)
+	if _, err := buf.Write(values); err != nil {
+		return err
+	}
 
 	triggers, err := genTriggers()
 	if err != nil {
 		return err
 	}
-	buf.Write(triggers)
+	if _, err := buf.Write(triggers); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -152,26 +159,26 @@ func generateRotterMappers() ([]byte, error) {
 func genInitValues() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteString(infoSecond + "\n")
-	vals := [...]string{
-		string(rand.Intn(AlphSize)),
-		string(rand.Intn(AlphSize)),
-		string(rand.Intn(AlphSize)),
+	values := [...]int{
+		rand.Intn(AlphSize),
+		rand.Intn(AlphSize),
+		rand.Intn(AlphSize),
 	}
-	buf.WriteString(firstInit + "=" + vals[0] + "\n")
-	buf.WriteString(secondInit + "=" + vals[1] + "\n")
-	buf.WriteString(thirdInit + "=" + vals[2] + "\n")
+	buf.WriteString(fmt.Sprintf("%s=%d\n", firstInit, values[0]))
+	buf.WriteString(fmt.Sprintf("%s=%d\n", secondInit, values[0]))
+	buf.WriteString(fmt.Sprintf("%s=%d\n", thirdInit, values[0]))
 	return buf.Bytes(), nil
 }
 
 func genTriggers() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteString(infoThird + "\n")
-	vals := [...]string{
-		string(rand.Intn(AlphSize)),
-		string(rand.Intn(AlphSize)),
+	vals := [...]int{
+		rand.Intn(AlphSize),
+		rand.Intn(AlphSize),
 	}
-	buf.WriteString(spinnerSecond + "=" + vals[0] + "\n")
-	buf.WriteString(spinnerThird + "=" + vals[1] + "\n")
+	buf.WriteString(fmt.Sprintf("%s=%d\n", spinnerSecond, vals[0]))
+	buf.WriteString(fmt.Sprintf("%s=%d\n", spinnerThird, vals[1]))
 	return buf.Bytes(), nil
 }
 

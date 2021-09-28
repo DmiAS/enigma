@@ -1,13 +1,15 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 
-	"github.com/DmiAS/command"
+	"github.com/DmiAS/iternal/app/config"
 )
 
-func main(){
-	flag.Parse()
-	args := flag.Args()
-	command.Run(args)
+func main() {
+	err := config.GenerateConfigFile("C:\\fourth_course\\ib\\labs\\second_lab\\config\\config.toml")
+	fmt.Println(err)
+	//flag.Parse()
+	//args := flag.Args()
+	//command.Run(args)
 }
