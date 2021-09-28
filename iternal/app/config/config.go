@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -34,6 +35,8 @@ const (
 
 	spinnerSecond = "Spin2"
 	spinnerThird  = "Spin3"
+
+	configName = "config"
 )
 
 type Letters = [AlphSize]int
@@ -46,11 +49,15 @@ type Config struct {
 	SpinTriggers [Spinners]int
 }
 
-func NewConfig(configName string) (*Config, error) {
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
+func NewConfig(configPath string) (*Config, error) {
 	viper.SetConfigName(configName)
 	viper.SetConfigType("toml")
 	viper.AddConfigPath("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -96,8 +103,8 @@ func createConfig() (*Config, error) {
 	return cfg, nil
 }
 
-func GenerateConfigFile(fileName string) error {
-	file, err := os.Create(fileName)
+func GenerateConfigFile(filePath string) error {
+	file, err := os.Create(fmt.Sprintf("%s\\%s.toml", filePath, configName))
 	if err != nil {
 		return err
 	}
@@ -150,7 +157,7 @@ func genMappers() ([]byte, error) {
 		return nil, err
 	}
 
-	reflector, err := generateRotterMappers()
+	reflector, err := generateReflector()
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +167,22 @@ func genMappers() ([]byte, error) {
 	buf.WriteString(fmt.Sprintf("%s=\"%s\"\n", reflectorMapper, string(reflector)))
 	return buf.Bytes(), nil
 
+}
+
+func generateReflector() ([]byte, error) {
+	b := new(bytes.Buffer)
+	for i := 0; i < AlphSize; i++ {
+		char := strconv.Itoa(AlphSize - i)
+		if _, err := b.WriteString(char); err != nil {
+			return nil, err
+		}
+		if i < AlphSize-1 {
+			if err := b.WriteByte('-'); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return b.Bytes(), nil
 }
 
 func generateRotterMappers() ([]byte, error) {

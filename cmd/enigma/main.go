@@ -9,7 +9,7 @@ import (
 func main() {
 	var cfgPath, fileIn, fileOut string
 	var shouldGen bool
-	flag.StringVar(&cfgPath, "config_path", "C:\\fourth_course\\ib\\labs\\second_lab\\config\\config.toml",
+	flag.StringVar(&cfgPath, "config_path", "C:\\fourth_course\\ib\\labs\\second_lab\\config",
 		"путь к файлу, из которого загружается конфигурация")
 	flag.BoolVar(&shouldGen, "gen", false,
 		"путь к файлу, в котором будет сгенерирована конфигурация")

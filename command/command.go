@@ -2,6 +2,7 @@ package command
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -19,10 +20,10 @@ func Run(cfgPath string, genPath bool, fileIn, fileOut string) {
 
 	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
-		log.Fatalf("оишбка при создании конфигурации = %s", err.Error())
+		log.Fatalf("ошибка при создании конфигурации = %s", err.Error())
 	}
-	m := enigma.NewEnigma(cfg)
 
+	m := enigma.NewEnigma(cfg)
 	if err := processFile(fileIn, fileOut, m); err != nil {
 		log.Fatalln("невозможно обработать файл - ", err)
 	}
@@ -35,7 +36,7 @@ func processFile(in, out string, machine *enigma.Enigma) error {
 	}
 	defer file.Close()
 
-	encryptedFile, err := os.OpenFile(out, os.O_WRONLY, os.ModePerm)
+	encryptedFile, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -43,16 +44,23 @@ func processFile(in, out string, machine *enigma.Enigma) error {
 
 	ch := make(chan byte)
 	defer close(ch)
-	machine.Process(ch)
+	go machine.Process(ch)
 
 	buf := bufio.NewReader(file)
 	encBuf := bufio.NewWriter(encryptedFile)
-	for char, err := buf.ReadByte(); ; {
-		if err != nil && err != io.EOF {
-			return err
+	defer encBuf.Flush()
+	for {
+		char, err := buf.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
 		}
 		ch <- char
 		encrypted := <-ch
+		fmt.Println(char, encrypted)
 		if err := encBuf.WriteByte(encrypted); err != nil {
 			return err
 		}

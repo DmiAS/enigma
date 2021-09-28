@@ -1,6 +1,8 @@
 package enigma
 
-import "github.com/DmiAS/iternal/app/config"
+import (
+	"github.com/DmiAS/iternal/app/config"
+)
 
 func getLetterIndex(letter byte) int {
 	return int(letter)
@@ -21,7 +23,7 @@ func (e *Enigma) Process(ch chan byte) {
 	outRight := e.startProcessRight(inRight)
 
 	for char := range ch {
-		e.spin()
+		//e.spin()
 		// буква проходит справа налево
 		inLeft <- getLetterIndex(char)
 		resL := <-outLeft
