@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
 
 	"github.com/spf13/viper"
 )
@@ -19,7 +20,7 @@ const (
 	infoFirst  = "# Конфигурация роттера"
 	infoSecond = "# Начальные значения роттера"
 	infoThird  = `# При какой букве крутить роттер, например, если Spin2 = "r", значит когда первый роттер дойдет до этой
-                 # буквы второй тоже повернется`
+# буквы второй тоже повернется`
 
 	firstMapper     = "RotterFirstMap"
 	secondMapper    = "RotterSecondMap"
@@ -85,8 +86,10 @@ func GenerateConfigFile(fileName string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	buf := bufio.NewWriter(file)
+	defer buf.Flush()
 
 	mappers, err := genMappers()
 	if err != nil {
@@ -136,10 +139,10 @@ func genMappers() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf.WriteString(firstMapper + "=" + string(first) + "\n")
-	buf.WriteString(secondMapper + "=" + string(second) + "\n")
-	buf.WriteString(thirdMapper + "=" + string(third) + "\n")
-	buf.WriteString(reflectorMapper + "=" + string(reflector) + "\n")
+	buf.WriteString(fmt.Sprintf("%s=\"%s\"\n", firstMapper, string(first)))
+	buf.WriteString(fmt.Sprintf("%s=\"%s\"\n", secondMapper, string(second)))
+	buf.WriteString(fmt.Sprintf("%s=\"%s\"\n", thirdMapper, string(third)))
+	buf.WriteString(fmt.Sprintf("%s=\"%s\"\n", reflectorMapper, string(reflector)))
 	return buf.Bytes(), nil
 
 }
@@ -148,9 +151,14 @@ func generateRotterMappers() ([]byte, error) {
 	shift := rand.Intn(AlphSize)
 	b := new(bytes.Buffer)
 	for i := 0; i < AlphSize; i++ {
-		char := byte((i + shift) % AlphSize)
-		if err := b.WriteByte(char); err != nil {
+		char := strconv.Itoa((i + shift) % AlphSize)
+		if _, err := b.WriteString(char); err != nil {
 			return nil, err
+		}
+		if i < AlphSize-1 {
+			if err := b.WriteByte('-'); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return b.Bytes(), nil
