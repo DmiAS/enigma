@@ -2,27 +2,25 @@ package enigma
 
 import "github.com/DmiAS/iternal/app/config"
 
-func getLetterIndex(letter byte) int{
-	index := letter - 'a'
-	return int(index)
+func getLetterIndex(letter byte) int {
+	return int(letter)
 }
 
-func indexToChar(index int) byte{
-	return 'a' + byte(index)
+func indexToChar(index int) byte {
+	return byte(index)
 }
 
-func keepRing(a int) int{
+func keepRing(a int) int {
 	return (config.AlphSize + a) % config.AlphSize
 }
 
-func (e *Enigma) Process(str []byte) []byte{
+func (e *Enigma) Process(ch chan byte) {
 	inLeft := make(chan int)
 	outLeft := e.startProcessLeft(inLeft)
 	inRight := make(chan int)
 	outRight := e.startProcessRight(inRight)
-	out := make([]byte, 0, len(str))
 
-	for _, char := range str{
+	for char := range ch {
 		e.spin()
 		// буква проходит справа налево
 		inLeft <- getLetterIndex(char)
@@ -33,12 +31,11 @@ func (e *Enigma) Process(str []byte) []byte{
 		inRight <- resRef
 		resR := <-outRight
 		// формируем результирующую строку
-		out = append(out, indexToChar(resR))
+		ch <- indexToChar(resR)
 	}
-	return out
 }
 
-func (e *Enigma) startProcessLeft(in chan int) chan int{
+func (e *Enigma) startProcessLeft(in chan int) chan int {
 	funcs := []pipeFunc{
 		e.processFirstL,
 		e.processSecondL,
@@ -48,7 +45,7 @@ func (e *Enigma) startProcessLeft(in chan int) chan int{
 	return out
 }
 
-func (e *Enigma) startProcessRight(in chan int) chan int{
+func (e *Enigma) startProcessRight(in chan int) chan int {
 	funcs := []pipeFunc{
 		e.processThirdR,
 		e.processSecondR,
@@ -58,26 +55,26 @@ func (e *Enigma) startProcessRight(in chan int) chan int{
 	return out
 }
 
-func (e *Enigma) processFirstL(letter int) int{
+func (e *Enigma) processFirstL(letter int) int {
 	curr := e.rotter1.GetLetter()
 	sum := keepRing(curr + letter)
 	return e.rotter1.Map(sum)
 }
-func (e *Enigma) processFirstR(letter int) int{
+func (e *Enigma) processFirstR(letter int) int {
 	mapped := e.rotter1.MapReversed(letter)
 	curr := e.rotter1.GetLetter()
 	newLetter := keepRing(mapped - curr)
 	return newLetter
 }
 
-func (e *Enigma) processSecondL(letter int) int{
+func (e *Enigma) processSecondL(letter int) int {
 	curr := e.rotter2.GetLetter()
 	currRotter1 := e.rotter1.GetLetter()
 	diff := keepRing(curr - currRotter1)
 	sum := keepRing(letter + diff)
 	return e.rotter2.Map(sum)
 }
-func (e *Enigma) processSecondR(letter int) int{
+func (e *Enigma) processSecondR(letter int) int {
 	mapped := e.rotter2.MapReversed(letter)
 	curr := e.rotter2.GetLetter()
 	currRotter1 := e.rotter1.GetLetter()
@@ -86,7 +83,7 @@ func (e *Enigma) processSecondR(letter int) int{
 	return newLetter
 }
 
-func (e *Enigma) processThirdL(letter int) int{
+func (e *Enigma) processThirdL(letter int) int {
 	curr := e.rotter3.GetLetter()
 	currRotter2 := e.rotter2.GetLetter()
 	diff := keepRing(curr - currRotter2)
@@ -94,7 +91,7 @@ func (e *Enigma) processThirdL(letter int) int{
 	return e.rotter3.Map(sum)
 }
 
-func (e *Enigma) processThirdR(letter int) int{
+func (e *Enigma) processThirdR(letter int) int {
 	mapped := e.rotter3.MapReversed(letter)
 	curr := e.rotter3.GetLetter()
 	currRotter2 := e.rotter2.GetLetter()
@@ -103,7 +100,7 @@ func (e *Enigma) processThirdR(letter int) int{
 	return newLetter
 }
 
-func (e Enigma) processReflector(letter int) int{
+func (e Enigma) processReflector(letter int) int {
 	currRotter3 := e.rotter3.GetLetter()
 	// буква только пришла на рефлектор
 	diff := keepRing(letter - currRotter3)
@@ -113,5 +110,3 @@ func (e Enigma) processReflector(letter int) int{
 	res := keepRing(mapped + currRotter3)
 	return res
 }
-
-
