@@ -1,0 +1,15 @@
+# Конфигурация роттера
+RotterFirstMap = "ekmflgdqvzntowyhxuspaibrcj"
+RotterSecondMap ="ajdksiruxblnwtmcqgznpyfvoe"
+RotterThirdMap = "bdfhjlcprtxvznyeiwgakmusqo"
+ReflectorMap =   "yruhqsldpxngokmiebfzcwvjat"
+
+# Начальные значения роттера
+RotterFirstInit = "q"
+RotterSecondInit = "u"
+RotterThirdInit = "c"
+
+# При какой букве крутить роттер, например, если Spin2 = "r", значит когда первый роттер дойдет до этой
+# буквы второй тоже повернется
+Spin2 = "r"
+Spin3 = "w"
