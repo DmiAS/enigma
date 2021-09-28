@@ -10,26 +10,25 @@ import (
 	"github.com/DmiAS/iternal/app/enigma"
 )
 
-func Run(args []string) {
-	if len(args) < 0 {
-		log.Fatalln("переданы не все аргументы")
+func Run(cfgPath string, genPath bool, fileIn, fileOut string) {
+	if genPath {
+		if err := config.GenerateConfigFile(cfgPath); err != nil {
+			log.Fatalln("невозможно сконфигурировать файл - ", err)
+		}
 	}
-	configName := args[0]
-	fileIn := args[1]
-	fileOut := args[2]
 
-	cfg, err := config.NewConfig(configName)
+	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
 		log.Fatalf("оишбка при создании конфигурации = %s", err.Error())
 	}
 	m := enigma.NewEnigma(cfg)
 
-	if err := proccessFile(fileIn, fileOut, m); err != nil {
+	if err := processFile(fileIn, fileOut, m); err != nil {
 		log.Fatalln("невозможно обработать файл - ", err)
 	}
 }
 
-func proccessFile(in, out string, machine *enigma.Enigma) error {
+func processFile(in, out string, machine *enigma.Enigma) error {
 	file, err := os.OpenFile(in, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		return err
