@@ -2,7 +2,6 @@ package command
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -60,7 +59,6 @@ func processFile(in, out string, machine *enigma.Enigma) error {
 		}
 		ch <- char
 		encrypted := <-ch
-		fmt.Println(char, encrypted)
 		if err := encBuf.WriteByte(encrypted); err != nil {
 			return err
 		}

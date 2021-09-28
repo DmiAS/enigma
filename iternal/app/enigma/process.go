@@ -23,7 +23,7 @@ func (e *Enigma) Process(ch chan byte) {
 	outRight := e.startProcessRight(inRight)
 
 	for char := range ch {
-		//e.spin()
+		e.spin()
 		// буква проходит справа налево
 		inLeft <- getLetterIndex(char)
 		resL := <-outLeft
