@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -62,23 +63,37 @@ func NewConfig(configName string) (*Config, error) {
 		return nil, err
 	}
 
-	return createConfig(), nil
+	return createConfig()
 }
 
-func createConfig() *Config {
+func createConfig() (*Config, error) {
 	cfg := new(Config)
-	cfg.Mappers[0] = createMapper(viper.GetString("RotterFirstMap"))
-	cfg.Mappers[1] = createMapper(viper.GetString("RotterSecondMap"))
-	cfg.Mappers[2] = createMapper(viper.GetString("RotterThirdMap"))
-	cfg.Mappers[3] = createMapper(viper.GetString("ReflectorMap"))
+	var err error
+	cfg.Mappers[0], err = createMapper(viper.GetString("RotterFirstMap"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.Mappers[1], err = createMapper(viper.GetString("RotterSecondMap"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.Mappers[2], err = createMapper(viper.GetString("RotterThirdMap"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.Mappers[3], err = createMapper(viper.GetString("ReflectorMap"))
+	if err != nil {
+		return nil, err
+	}
 
-	cfg.InitLetters[0] = getInit(viper.GetString("RotterFirstInit"))
-	cfg.InitLetters[1] = getInit(viper.GetString("RotterSecondInit"))
-	cfg.InitLetters[2] = getInit(viper.GetString("RotterThirdInit"))
+	cfg.InitLetters[0] = viper.GetInt("RotterFirstInit")
+	cfg.InitLetters[1] = viper.GetInt("RotterSecondInit")
+	cfg.InitLetters[2] = viper.GetInt("RotterThirdInit")
 
-	cfg.SpinTriggers[0] = getInit(viper.GetString("Spin2"))
-	cfg.SpinTriggers[1] = getInit(viper.GetString("Spin3"))
-	return cfg
+	cfg.SpinTriggers[0] = viper.GetInt("Spin2")
+	cfg.SpinTriggers[1] = viper.GetInt("Spin3")
+
+	return cfg, nil
 }
 
 func GenerateConfigFile(fileName string) error {
@@ -190,14 +205,15 @@ func genTriggers() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func getInit(str string) int {
-	char := str[0]
-	return int(char - 'a')
-}
-func createMapper(str string) Letters {
+func createMapper(str string) (Letters, error) {
 	var l Letters
-	for i := range str {
-		l[i] = int(str[i] - 'a')
+	res := strings.Split(str, "-")
+	for i, val := range res {
+		intVal, err := strconv.Atoi(val)
+		if err != nil {
+			return Letters{}, err
+		}
+		l[i] = intVal
 	}
-	return l
+	return l, nil
 }
